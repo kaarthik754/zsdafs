@@ -1,0 +1,927 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Admin Tools: Payslip & License</title>
+    
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts for Licenses -->
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Pinyon+Script&family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ================= BASE ================= */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: #f2f2f2;
+            padding: 20px;
+            color: #333;
+            min-height: 100vh;
+            margin: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            align-items: flex-start;
+            max-width: 1400px;
+            margin: 0 auto;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* ================= NAVIGATION TABS ================= */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 10px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .nav-tab {
+            padding: 10px 30px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            color: #666;
+        }
+
+        .nav-tab.active {
+            background: #003c8f;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,60,143,0.3);
+        }
+
+        /* ================= WELCOME / INPUT CARD ================= */
+        .welcome-card {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+            margin: 20px auto;
+        }
+
+        .welcome-card h1 {
+            color: #003c8f;
+            margin-bottom: 20px;
+        }
+
+        /* --- SCHOOL FINDER --- */
+        .school-finder {
+            background: #f8fbff;
+            border: 1px solid #cce5ff;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .finder-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #003c8f;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #cce5ff;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .api-toggle {
+            font-size: 12px;
+            font-weight: normal;
+            color: #666;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .finder-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .finder-controls.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        .finder-controls select, .finder-controls input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .search-btn {
+            background: #003c8f;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 5px;
+            transition: background 0.2s;
+        }
+
+        .search-btn:hover { background: #002a66; }
+        .search-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .school-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            margin-top: 15px;
+        }
+
+        .school-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.1s;
+        }
+
+        .school-item:hover { background: #f0f7ff; }
+        .school-item:last-child { border-bottom: none; }
+        .school-item strong { display: block; color: #333; font-size: 14px; margin-bottom: 2px; }
+        .school-item small { color: #666; }
+
+        .selected-school-info {
+            margin-top: 15px;
+            font-size: 13px;
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #c8e6c9;
+            color: #2e7d32;
+        }
+
+        /* --- FORM ELEMENTS --- */
+        .file-upload-wrapper {
+            border: 2px dashed #ccc;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            position: relative;
+            background: #fafafa;
+            text-align: center;
+        }
+        
+        .file-upload-wrapper input[type="file"] {
+            position: absolute;
+            left: 0; top: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer;
+        }
+
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 13px; }
+        input[type="text"], input[type="email"], input[type="date"], input[type="number"], select {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background: #003c8f; color: white; border: none; padding: 12px 25px;
+            font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;
+        }
+        .btn-primary:hover { background: #002a66; }
+
+        .btn-secondary {
+            background: #666; color: white; border: none; padding: 8px 15px;
+            border-radius: 4px; cursor: pointer; font-size: 14px; margin-bottom: 20px;
+        }
+
+        /* ================= PREVIEW AREA ================= */
+        .preview-wrapper {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        /* Editor Sidebar */
+        .form-box {
+            width: 320px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0,0,0,.15);
+            position: sticky; top: 20px; z-index: 100;
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        @media (max-width: 900px) {
+            .form-box { position: relative; top: 0; max-width: 100%; max-height: none; }
+        }
+
+        .form-box h2 {
+            margin-top: 0; margin-bottom: 20px; color: #003c8f;
+            border-bottom: 2px solid #eee; padding-bottom: 10px;
+        }
+
+        /* ================= PAYSLIP STYLES ================= */
+        .payslip {
+            background: #fff;
+            flex: 1;
+            min-width: 300px;
+            max-width: 800px;
+            padding: 40px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        
+        .payslip .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px; }
+        .payslip .logo { height: 80px; object-fit: contain; }
+        .payslip .header-text { text-align: right; }
+        .payslip .box { 
+            border: 1px solid #000; 
+            padding: 15px; 
+            margin-bottom: 25px; 
+            font-size: 14px;
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            row-gap: 8px; 
+        }
+        .payslip .box p { margin: 0; }
+        
+        .payslip .tables {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .payslip table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .payslip th, .payslip td { border: 1px solid #000; padding: 8px; }
+        .payslip th { background: #efefef; text-align: left; }
+        .payslip td:last-child { text-align: right; }
+        .payslip .total { font-weight: bold; background: #f5f5f5; }
+        
+        .payslip .net { 
+            border-top: 2px solid #000; 
+            margin-top: 20px; 
+            padding-top: 15px; 
+            font-size: 16px; 
+        }
+
+        /* ================= LICENSE / CERTIFICATE STYLES ================= */
+        .license-container {
+            background: #fff;
+            flex: 1;
+            min-width: 300px;
+            max-width: 900px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            color: #000;
+        }
+
+        /* --- US STYLE LICENSE --- */
+        .license-us {
+            padding: 40px;
+            border: 15px double #003c8f;
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            background-image: radial-gradient(circle, #fff 40%, #f9fbfd 100%);
+        }
+
+        .license-us .state-header {
+            font-size: 32px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+            color: #2c3e50; margin-bottom: 10px; border-bottom: 2px solid #2c3e50;
+            display: inline-block; padding-bottom: 5px;
+        }
+
+        .license-us .dept-subhead {
+            font-size: 20px; font-family: 'Roboto', sans-serif; text-transform: uppercase;
+            color: #555; margin-bottom: 30px;
+        }
+
+        .license-us .seal-container { margin: 20px 0; height: 100px; display:flex; justify-content:center; }
+        .license-us .seal-placeholder { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ccc; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 10px; text-transform: uppercase; }
+
+        .license-us .certifies-text { font-size: 18px; margin: 20px 0; font-style: italic; }
+        .license-us .teacher-name { font-family: 'Pinyon Script', cursive; font-size: 58px; color: #003c8f; margin: 10px 0 30px 0; line-height: 1; }
+        .license-us .license-title { font-size: 24px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; background: #003c8f; color: white; padding: 10px 20px; display: inline-block; border-radius: 4px; }
+
+        .license-us .details-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left;
+            margin: 40px auto; max-width: 600px; font-family: 'Roboto', sans-serif;
+            border: 1px solid #ddd; padding: 20px;
+        }
+
+        /* --- CANADA STYLE LICENSE --- */
+        .license-ca {
+            padding: 50px;
+            border: 10px solid #c8102e;
+            outline: 2px solid #fff;
+            outline-offset: -15px;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .license-ca .prov-header { font-family: 'Playfair Display', serif; font-size: 36px; color: #000; margin-bottom: 5px; }
+        .license-ca .min-header { font-size: 18px; text-transform: uppercase; letter-spacing: 3px; color: #666; margin-bottom: 40px; }
+        .license-ca .cert-title { font-family: 'Pinyon Script', cursive; font-size: 42px; color: #c8102e; margin-bottom: 30px; }
+        .license-ca .body-text { font-size: 16px; line-height: 1.6; margin-bottom: 30px; }
+        .license-ca .teacher-name-ca { font-size: 32px; font-weight: bold; border-bottom: 1px solid #000; display: inline-block; padding: 0 20px 5px 20px; margin: 0 10px; }
+
+        .license-ca .footer-sig { margin-top: 60px; display: flex; justify-content: space-around; }
+        .license-ca .sig-line { border-top: 1px solid #000; width: 200px; padding-top: 10px; font-size: 12px; text-transform: uppercase; }
+
+        /* ================= FOOTER ================= */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            color: #666;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        /* ================= PRINT STYLES ================= */
+        @media print {
+            @page { margin: 0; size: auto; }
+            body, html { background: #fff; padding: 0; margin: 0; }
+            .app-container { display: block; margin: 0; }
+            .form-box, .welcome-card, .footer, .nav-tabs, .btn-secondary { display: none !important; }
+            .payslip { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; border: none; box-shadow: none; }
+            .license-container { width: 100%; height: 100%; margin: 0; padding: 0; box-shadow: none; border: none; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+    const DEFAULT_LOGO_FILENAME = "logo.png";
+    const US_STATES = ["Arizona", "California", "Florida", "Georgia", "Illinois", "Massachusetts", "Michigan", "New Jersey", "New York", "North Carolina", "Ohio", "Pennsylvania", "Texas", "Virginia", "Washington"];
+    
+    // --- EXTENSIVE STATIC SCHOOL DATABASE (Fast Local Search) ---
+    const STATIC_SCHOOL_DATABASE = [
+        // TEXAS
+        { name: "Allen High School / Allen ISD", state: "Texas", type: "K-12", emailDomain: "allenisd.org" },
+        { name: "Plano West Senior High / Plano ISD", state: "Texas", type: "K-12", emailDomain: "pisd.edu" },
+        { name: "Houston Independent School District", state: "Texas", type: "District", emailDomain: "houstonisd.org" },
+        { name: "Dallas Independent School District", state: "Texas", type: "District", emailDomain: "dallasisd.org" },
+        { name: "Austin Independent School District", state: "Texas", type: "District", emailDomain: "austinisd.org" },
+        { name: "Cypress-Fairbanks ISD", state: "Texas", type: "District", emailDomain: "cfisd.net" },
+        { name: "Northside ISD", state: "Texas", type: "District", emailDomain: "nisd.net" },
+        { name: "Fort Worth ISD", state: "Texas", type: "District", emailDomain: "fwisd.org" },
+        { name: "Katy ISD", state: "Texas", type: "District", emailDomain: "katyisd.org" },
+        { name: "Frisco ISD", state: "Texas", type: "District", emailDomain: "friscoisd.org" },
+        { name: "Conroe ISD", state: "Texas", type: "District", emailDomain: "conroeisd.net" },
+        
+        // CALIFORNIA
+        { name: "Los Angeles Unified School District", state: "California", type: "District", emailDomain: "lausd.net" },
+        { name: "San Diego Unified School District", state: "California", type: "District", emailDomain: "sandi.net" },
+        { name: "Fresno Unified School District", state: "California", type: "District", emailDomain: "fresnounified.org" },
+        { name: "Long Beach Unified School District", state: "California", type: "District", emailDomain: "lbschools.net" },
+        { name: "San Francisco Unified School District", state: "California", type: "District", emailDomain: "sfusd.edu" },
+        { name: "Elk Grove Unified School District", state: "California", type: "District", emailDomain: "egusd.net" },
+        { name: "Lowell High School", state: "California", type: "K-12", emailDomain: "sfusd.edu" },
+        { name: "Palo Alto High School", state: "California", type: "K-12", emailDomain: "pausd.org" },
+        
+        // FLORIDA
+        { name: "Miami-Dade County Public Schools", state: "Florida", type: "District", emailDomain: "dadeschools.net" },
+        { name: "Broward County Public Schools", state: "Florida", type: "District", emailDomain: "browardschools.com" },
+        { name: "Hillsborough County Public Schools", state: "Florida", type: "District", emailDomain: "hcps.net" },
+        { name: "Orange County Public Schools", state: "Florida", type: "District", emailDomain: "ocps.net" },
+        { name: "Palm Beach County School District", state: "Florida", type: "District", emailDomain: "palmbeachschools.org" },
+        { name: "Duval County Public Schools", state: "Florida", type: "District", emailDomain: "duvalschools.org" },
+        
+        // NEW YORK
+        { name: "New York City Department of Education", state: "New York", type: "District", emailDomain: "schools.nyc.gov" },
+        { name: "Buffalo Public Schools", state: "New York", type: "District", emailDomain: "buffaloschools.org" },
+        { name: "Rochester City School District", state: "New York", type: "District", emailDomain: "rcsdk12.org" },
+        { name: "Yonkers Public Schools", state: "New York", type: "District", emailDomain: "yonkerspublicschools.org" },
+        { name: "Syracuse City School District", state: "New York", type: "District", emailDomain: "scsd.us" },
+        { name: "Stuyvesant High School", state: "New York", type: "K-12", emailDomain: "stuy.edu" },
+        { name: "Bronx High School of Science", state: "New York", type: "K-12", emailDomain: "bxscience.edu" },
+
+        // ILLINOIS
+        { name: "Chicago Public Schools", state: "Illinois", type: "District", emailDomain: "cps.edu" },
+        { name: "School District U-46 (Elgin)", state: "Illinois", type: "District", emailDomain: "u-46.org" },
+        { name: "Plainfield CCSD 202", state: "Illinois", type: "District", emailDomain: "psd202.org" },
+        { name: "Rockford Public Schools 205", state: "Illinois", type: "District", emailDomain: "rps205.com" },
+        { name: "Indian Prairie School District 204", state: "Illinois", type: "District", emailDomain: "ipsd.org" },
+
+        // GEORGIA
+        { name: "Gwinnett County Public Schools", state: "Georgia", type: "District", emailDomain: "gcpsk12.org" },
+        { name: "Cobb County School District", state: "Georgia", type: "District", emailDomain: "cobbk12.org" },
+        { name: "DeKalb County School District", state: "Georgia", type: "District", emailDomain: "dekalbschoolsga.org" },
+        { name: "Fulton County Schools", state: "Georgia", type: "District", emailDomain: "fultonschools.org" },
+        { name: "Atlanta Public Schools", state: "Georgia", type: "District", emailDomain: "atlantapublicschools.us" },
+
+        // NORTH CAROLINA
+        { name: "Wake County Public School System", state: "North Carolina", type: "District", emailDomain: "wcpss.net" },
+        { name: "Charlotte-Mecklenburg Schools", state: "North Carolina", type: "District", emailDomain: "cms.k12.nc.us" },
+        { name: "Guilford County Schools", state: "North Carolina", type: "District", emailDomain: "gcsnc.com" },
+        { name: "Winston-Salem/Forsyth County Schools", state: "North Carolina", type: "District", emailDomain: "wsfcs.k12.nc.us" },
+        { name: "Cumberland County Schools", state: "North Carolina", type: "District", emailDomain: "ccs.k12.nc.us" },
+
+        // VIRGINIA
+        { name: "Fairfax County Public Schools", state: "Virginia", type: "District", emailDomain: "fcps.edu" },
+        { name: "Prince William County Public Schools", state: "Virginia", type: "District", emailDomain: "pwcs.edu" },
+        { name: "Loudoun County Public Schools", state: "Virginia", type: "District", emailDomain: "lcps.org" },
+        { name: "Virginia Beach City Public Schools", state: "Virginia", type: "District", emailDomain: "vbschools.com" },
+        { name: "Chesterfield County Public Schools", state: "Virginia", type: "District", emailDomain: "ccpsnet.net" },
+
+        // PENNSYLVANIA
+        { name: "School District of Philadelphia", state: "Pennsylvania", type: "District", emailDomain: "philasd.org" },
+        { name: "Pittsburgh Public Schools", state: "Pennsylvania", type: "District", emailDomain: "pghschools.org" },
+        { name: "Central Bucks School District", state: "Pennsylvania", type: "District", emailDomain: "cbsd.org" },
+        { name: "Reading School District", state: "Pennsylvania", type: "District", emailDomain: "readingsd.org" },
+        { name: "Allentown School District", state: "Pennsylvania", type: "District", emailDomain: "allentownsd.org" },
+
+        // OHIO
+        { name: "Columbus City Schools", state: "Ohio", type: "District", emailDomain: "columbus.k12.oh.us" },
+        { name: "Cleveland Metropolitan School District", state: "Ohio", type: "District", emailDomain: "clevelandmetroschools.org" },
+        { name: "Cincinnati Public Schools", state: "Ohio", type: "District", emailDomain: "cps-k12.org" },
+        { name: "Toledo Public Schools", state: "Ohio", type: "District", emailDomain: "tps.org" },
+        { name: "Akron Public Schools", state: "Ohio", type: "District", emailDomain: "akronschools.com" },
+
+        // MICHIGAN
+        { name: "Detroit Public Schools Community District", state: "Michigan", type: "District", emailDomain: "detroitk12.org" },
+        { name: "Utica Community Schools", state: "Michigan", type: "District", emailDomain: "uticak12.org" },
+        { name: "Dearborn Public Schools", state: "Michigan", type: "District", emailDomain: "dearbornschools.org" },
+        { name: "Ann Arbor Public Schools", state: "Michigan", type: "District", emailDomain: "a2schools.org" },
+        { name: "Plymouth-Canton Community Schools", state: "Michigan", type: "District", emailDomain: "pccsk12.com" },
+
+        // NEW JERSEY
+        { name: "Newark Public Schools", state: "New Jersey", type: "District", emailDomain: "nps.k12.nj.us" },
+        { name: "Jersey City Public Schools", state: "New Jersey", type: "District", emailDomain: "jcboe.org" },
+        { name: "Paterson Public Schools", state: "New Jersey", type: "District", emailDomain: "paterson.k12.nj.us" },
+        { name: "Elizabeth Public Schools", state: "New Jersey", type: "District", emailDomain: "epsnj.org" },
+        { name: "Toms River Regional Schools", state: "New Jersey", type: "District", emailDomain: "trschools.com" },
+
+        // WASHINGTON
+        { name: "Seattle Public Schools", state: "Washington", type: "District", emailDomain: "seattleschools.org" },
+        { name: "Lake Washington School District", state: "Washington", type: "District", emailDomain: "lwsd.org" },
+        { name: "Spokane Public Schools", state: "Washington", type: "District", emailDomain: "spokaneschools.org" },
+        { name: "Tacoma Public Schools", state: "Washington", type: "District", emailDomain: "tacoma.k12.wa.us" },
+        { name: "Kent School District", state: "Washington", type: "District", emailDomain: "kent.k12.wa.us" },
+
+        // ARIZONA
+        { name: "Mesa Public Schools", state: "Arizona", type: "District", emailDomain: "mpsaz.org" },
+        { name: "Chandler Unified School District", state: "Arizona", type: "District", emailDomain: "cusd80.com" },
+        { name: "Tucson Unified School District", state: "Arizona", type: "District", emailDomain: "tusd1.org" },
+        { name: "Peoria Unified School District", state: "Arizona", type: "District", emailDomain: "peoriaunified.org" },
+        { name: "Gilbert Public Schools", state: "Arizona", type: "District", emailDomain: "gilbertschools.net" },
+
+        // MASSACHUSETTS
+        { name: "Boston Public Schools", state: "Massachusetts", type: "District", emailDomain: "bostonpublicschools.org" },
+        { name: "Worcester Public Schools", state: "Massachusetts", type: "District", emailDomain: "worcesterschools.org" },
+        { name: "Springfield Public Schools", state: "Massachusetts", type: "District", emailDomain: "springfieldpublicschools.com" },
+        { name: "Lynn Public Schools", state: "Massachusetts", type: "District", emailDomain: "lynnschools.org" },
+        { name: "Lowell Public Schools", state: "Massachusetts", type: "District", emailDomain: "lowell.k12.ma.us" }
+    ];
+
+    const MOCK_PRINCIPALS = ["Dr. Jason Johnston", "Jeff Banner", "Jeremy Gilbert", "Michael Jones", "Brent Kline", "Seung Yu", "Rachel Hoyle", "Sarah Johnson", "Emily Carter"];
+
+    // --- GLOBAL HELPERS ---
+    function numberToWords(amount) {
+        if (isNaN(amount)) return "";
+        let absAmount = Math.abs(amount);
+        const units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+        const teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+        const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+        
+        const convertHundreds = (num) => {
+            let str = "";
+            if (num > 99) { str += units[Math.floor(num / 100)] + " Hundred "; num %= 100; }
+            if (num > 19) { str += tens[Math.floor(num / 10)] + " "; num %= 10; }
+            if (num > 9) { str += teens[num - 10] + " "; num = 0; }
+            if (num > 0) { str += units[num] + " "; }
+            return str;
+        };
+
+        let [dollars, cents] = absAmount.toFixed(2).split(".");
+        dollars = parseInt(dollars);
+        cents = parseInt(cents);
+        
+        if (dollars === 0) return "Zero";
+        
+        let words = "";
+        
+        if (Math.floor(dollars / 1000000) > 0) {
+            words += convertHundreds(Math.floor(dollars / 1000000)) + "Million ";
+            dollars %= 1000000;
+        }
+        
+        if (Math.floor(dollars / 1000) > 0) {
+            words += convertHundreds(Math.floor(dollars / 1000)) + "Thousand ";
+            dollars %= 1000;
+        }
+        
+        if (dollars > 0) {
+            words += convertHundreds(dollars);
+        }
+        
+        return words.trim() + " point " + (cents < 10 ? "Zero " + units[cents] : convertHundreds(cents)).trim() + " only";
+    }
+
+    const fmt = (num) => num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatDate = (dateStr) => {
+        if(!dateStr) return "";
+        return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // --- PREVIEW COMPONENTS (Global Scope) ---
+    
+    const PayslipPreview = ({ formData, logoUrl }) => {
+        const gross = parseFloat(formData.basicSalary) || 0;
+        const totalDed = (parseFloat(formData.deductionTRS)||0) + (parseFloat(formData.deductionHealth)||0) + (parseFloat(formData.deductionFedTax)||0) + (parseFloat(formData.deductionSS)||0) + (parseFloat(formData.deductionMedicare)||0);
+        const net = gross - totalDed;
+        const netInWords = numberToWords(net);
+
+        return (
+            <div className="payslip">
+                <div className="header">
+                    <img src={logoUrl} className="logo" onError={(e)=>e.target.style.display='none'} />
+                    <div className="header-text">
+                        <strong>{formData.schoolName.toUpperCase()}</strong><br />
+                        Payslip for <strong>{formData.payPeriod}</strong>
+                    </div>
+                </div>
+                <div className="box">
+                    <p><strong>Employee Name:</strong> {formData.employeeName}</p>
+                    <p><strong>Email:</strong> {formData.email}</p>
+                    <p><strong>Pay Period:</strong> {formData.payPeriod}</p>
+                    <p><strong>Pay Date:</strong> {formatDate(formData.payDate)}</p>
+                </div>
+                
+                <div className="tables">
+                    <table>
+                        <thead><tr><th>Earnings</th><th>Amount ($)</th></tr></thead>
+                        <tbody>
+                            <tr><td>Basic Salary</td><td>{fmt(gross)}</td></tr>
+                            <tr><td style={{border:'none'}}>&nbsp;</td><td style={{border:'none'}}></td></tr>
+                            <tr><td style={{border:'none'}}>&nbsp;</td><td style={{border:'none'}}></td></tr>
+                            <tr className="total"><td>Gross Earnings</td><td>{fmt(gross)}</td></tr>
+                        </tbody>
+                    </table>
+                    
+                    <table>
+                        <thead><tr><th>Deductions</th><th>Amount ($)</th></tr></thead>
+                        <tbody>
+                            <tr><td>TRS (7.7%)</td><td>{fmt(parseFloat(formData.deductionTRS))}</td></tr>
+                            <tr><td>Health Insurance</td><td>{fmt(parseFloat(formData.deductionHealth))}</td></tr>
+                            <tr><td>Federal Tax</td><td>{fmt(parseFloat(formData.deductionFedTax))}</td></tr>
+                            <tr><td>Social Security</td><td>{fmt(parseFloat(formData.deductionSS))}</td></tr>
+                            <tr><td>Medicare</td><td>{fmt(parseFloat(formData.deductionMedicare))}</td></tr>
+                            <tr className="total"><td>Total Deductions</td><td>{fmt(totalDed)}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="net">
+                    <strong>Net Pay:</strong> ${fmt(net)}<br />
+                    <strong>In Words:</strong> {netInWords}
+                </div>
+            </div>
+        );
+    };
+
+    const LicensePreview = ({ formData, searchCountry, searchState, customLogo }) => {
+        const isCanada = searchCountry === "Canada";
+        return isCanada ? (
+            <div className="license-container license-ca">
+                <div className="prov-header">Province of {searchState || "Ontario"}</div>
+                <div className="min-header">Ministry of Education</div>
+                <div className="cert-title">Certificate of Qualification</div>
+                <div className="body-text">This is to certify that</div>
+                <div className="teacher-name-ca">{formData.employeeName}</div>
+                <div className="body-text" style={{marginTop:'30px'}}>having fulfilled the requirements of the<br/><strong>{searchState} College of Teachers Act</strong><br/>is granted this Certificate of Qualification and Registration.</div>
+                <div className="footer-sig"><div className="sig-line">Registrar</div><div className="sig-line">Chair of Council</div></div>
+                <div style={{marginTop:'40px', fontSize:'12px', color:'#999'}}>Registration No: {formData.licenseNumber} • Issued: {formatDate(formData.licenseIssueDate)}</div>
+            </div>
+        ) : (
+            <div className="license-container license-us">
+                <div className="state-header">State of {searchState || "Texas"}</div>
+                <div className="dept-subhead">Department of Education</div>
+                <div className="seal-container">{customLogo ? <img src={customLogo} style={{height:'100px'}}/> : <div className="seal-placeholder">State Seal</div>}</div>
+                <div className="license-title">{formData.licenseType} License</div>
+                <div className="certifies-text">This certifies that</div>
+                <div className="teacher-name">{formData.employeeName}</div>
+                <div className="certifies-text" style={{fontSize:'14px'}}>has satisfied the requirements prescribed by the State Board of Education<br/>and is hereby licensed to practice as an educator in the public schools.</div>
+                <div className="details-grid">
+                    <div><strong>License Number:</strong><br/>{formData.licenseNumber}</div>
+                    <div><strong>Status:</strong><br/>Active / Good Standing</div>
+                    <div><strong>Issue Date:</strong><br/>{formatDate(formData.licenseIssueDate)}</div>
+                    <div><strong>Expiration Date:</strong><br/>{formatDate(formData.licenseExpDate)}</div>
+                </div>
+                <div style={{marginTop:'30px', borderTop:'2px solid #003c8f', display:'inline-block', padding:'10px 50px'}}><em style={{fontFamily:'Pinyon Script', fontSize:'24px'}}>State Superintendent</em></div>
+            </div>
+        );
+    };
+
+    // --- MAIN APP ---
+    function App() {
+        const [appMode, setAppMode] = React.useState('payslip');
+        const [view, setView] = React.useState('input'); 
+        const [customLogo, setCustomLogo] = React.useState(null);
+        
+        const [searchCountry, setSearchCountry] = React.useState("USA");
+        const [searchState, setSearchState] = React.useState("Texas");
+        const [searchKeyword, setSearchKeyword] = React.useState(""); 
+        const [filteredSchools, setFilteredSchools] = React.useState([]);
+        const [selectedSchoolData, setSelectedSchoolData] = React.useState(null);
+
+        const [formData, setFormData] = React.useState({
+            schoolName: "ALLEN HIGH SCHOOL / ALLEN ISD",
+            schoolEmailDomain: "allenisd.org",
+            schoolPrincipal: "Dr. Jason Johnston", 
+            employeeName: "",
+            email: "",
+            payPeriod: "December 2025",
+            payDate: "2025-12-15",
+            basicSalary: 4635.92,
+            deductionTRS: 356.97,
+            deductionHealth: 150.00,
+            deductionFedTax: 417.23,
+            deductionSS: 287.43,
+            deductionMedicare: 67.22,
+            licenseIssueDate: "2024-08-01",
+            licenseExpDate: "2029-08-01",
+            licenseType: "Professional Educator",
+            licenseNumber: "8821940"
+        });
+
+        const logoUrl = customLogo || DEFAULT_LOGO_FILENAME;
+
+        // Auto-refresh filtered list using STATIC DB only (No Fetch)
+        React.useEffect(() => {
+            const staticMatches = STATIC_SCHOOL_DATABASE.filter(s => {
+                const stateMatch = s.state === searchState;
+                const keywordMatch = searchKeyword ? s.name.toLowerCase().includes(searchKeyword.toLowerCase()) : true;
+                return stateMatch && keywordMatch;
+            });
+            
+            const results = staticMatches.map((s, i) => ({
+                ...s,
+                id: `static_${i}`,
+                country: "USA",
+                principal: MOCK_PRINCIPALS[i % MOCK_PRINCIPALS.length],
+                website: `https://www.${s.emailDomain}`
+            }));
+            
+            setFilteredSchools(results);
+        }, [searchState, searchCountry, searchKeyword]);
+
+        const handleCountryChange = (e) => {
+            const country = e.target.value;
+            setSearchCountry(country);
+            setSearchState(country === 'USA' ? 'Texas' : ''); 
+        };
+
+        const handleSchoolSelect = (school) => {
+            setSelectedSchoolData(school);
+            setFormData(prev => ({
+                ...prev,
+                schoolName: school.name,
+                schoolEmailDomain: school.emailDomain,
+                schoolPrincipal: school.principal || "Principal Name", 
+                email: prev.employeeName ? `${prev.employeeName.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '')}${Math.floor(Math.random()*90+10)}@${school.emailDomain}` : ""
+            }));
+        };
+
+        const handleChange = (e) => {
+            const { name, value } = e.target;
+            setFormData(prev => {
+                const newData = { ...prev, [name]: value };
+                if (name === 'employeeName') {
+                     const firstName = value.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+                     const randomNum = Math.floor(Math.random() * 90 + 10);
+                     newData.email = `${firstName}${randomNum}@${newData.schoolEmailDomain || "school.org"}`;
+                }
+                return newData;
+            });
+        };
+
+        const handleLogoUpload = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => setCustomLogo(reader.result);
+                reader.readAsDataURL(file);
+            }
+        };
+
+        const handleNext = () => {
+            if (!formData.employeeName) { alert("Please enter Employee Name"); return; }
+            setView('preview');
+        };
+
+        const handlePrint = () => setTimeout(() => { window.focus(); window.print(); }, 100);
+
+        return (
+            <React.Fragment>
+                <div className="app-container">
+                    
+                    {/* INPUT VIEW */}
+                    {view === 'input' && (
+                        <div className="welcome-card">
+                            <h1>School Admin Tools</h1>
+                            
+                            <div className="nav-tabs">
+                                <button className={`nav-tab ${appMode === 'payslip' ? 'active' : ''}`} onClick={()=>setAppMode('payslip')}>
+                                    <i className="fa-solid fa-file-invoice-dollar"></i> Payslip
+                                </button>
+                                <button className={`nav-tab ${appMode === 'license' ? 'active' : ''}`} onClick={()=>setAppMode('license')}>
+                                    <i className="fa-solid fa-certificate"></i> Teacher License
+                                </button>
+                            </div>
+
+                            <div className="school-finder">
+                                <div className="finder-title">
+                                    <span><i className="fa-solid fa-map-location-dot"></i> Select Location & School</span>
+                                    <span className="api-toggle" onClick={() => alert("Static Database Mode Active for Speed")}>
+                                        <i className="fa-solid fa-bolt"></i> Fast Search Active
+                                    </span>
+                                </div>
+
+                                <div className="finder-controls">
+                                    <select value={searchCountry} onChange={handleCountryChange}>
+                                        <option value="USA">United States</option>
+                                        <option value="UK">United Kingdom</option>
+                                        <option value="Canada">Canada</option>
+                                    </select>
+                                    {searchCountry === 'USA' ? (
+                                        <select value={searchState} onChange={(e) => setSearchState(e.target.value)}>
+                                            {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    ) : (
+                                        <input placeholder="Province / State" value={searchState} onChange={(e) => setSearchState(e.target.value)} />
+                                    )}
+                                </div>
+                                <div className="finder-controls full-width">
+                                    <input 
+                                        placeholder="Filter list by School Name..." 
+                                        value={searchKeyword} 
+                                        onChange={(e) => setSearchKeyword(e.target.value)} 
+                                    />
+                                </div>
+
+                                {filteredSchools.length > 0 ? (
+                                    <div className="school-list">
+                                        {filteredSchools.map(school => (
+                                            <div key={school.id} className="school-item" onClick={() => handleSchoolSelect(school)} style={{background: selectedSchoolData?.id === school.id ? '#e8f5e9' : 'transparent'}}>
+                                                <strong>{school.name}</strong>
+                                                <small>{school.state}, {school.country}</small>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div style={{padding:'10px', color:'#666', fontStyle:'italic'}}>No schools found in database for this selection.</div>
+                                )}
+                            </div>
+
+                            {/* SCHOOL DETAILS (EDITABLE) */}
+                            <div className="form-group">
+                                <label>School Name (Editable)</label>
+                                <input name="schoolName" value={formData.schoolName} onChange={handleChange} />
+                            </div>
+                            <div className="form-group">
+                                <label>Principal Name (Editable)</label>
+                                <input name="schoolPrincipal" value={formData.schoolPrincipal} onChange={handleChange} />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Employee Name</label>
+                                <input name="employeeName" placeholder="e.g. Olivia William" value={formData.employeeName} onChange={handleChange} />
+                            </div>
+
+                            {appMode === 'license' && (
+                                <React.Fragment>
+                                    <div className="form-group">
+                                        <label>License Type</label>
+                                        <select name="licenseType" value={formData.licenseType} onChange={handleChange}>
+                                            <option>Professional Educator</option>
+                                            <option>Provisional</option>
+                                            <option>Substitute</option>
+                                        </select>
+                                    </div>
+                                    <div className="finder-controls">
+                                        <div><label>Issue Date</label><input type="date" name="licenseIssueDate" value={formData.licenseIssueDate} onChange={handleChange} /></div>
+                                        <div><label>Exp. Date</label><input type="date" name="licenseExpDate" value={formData.licenseExpDate} onChange={handleChange} /></div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>License Number</label>
+                                        <input name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} />
+                                    </div>
+                                </React.Fragment>
+                            )}
+
+                            {appMode === 'payslip' && (
+                                <div className="form-group">
+                                    <label>Email Address (Fully Editable)</label>
+                                    <input name="email" value={formData.email} onChange={handleChange} /> 
+                                </div>
+                            )}
+
+                            <div className="form-group">
+                                <label>{appMode === 'license' ? "State Seal / Logo (Optional)" : "School Logo (Optional)"}</label>
+                                <div className="file-upload-wrapper">
+                                    <input type="file" accept="image/*" onChange={handleLogoUpload} />
+                                    <small>{customLogo ? "Custom Logo Loaded" : "Using Default"}</small>
+                                </div>
+                            </div>
+
+                            <button className="btn-primary" onClick={handleNext}>
+                                Generate {appMode === 'payslip' ? 'Payslip' : 'License'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* PREVIEW VIEW */}
+                    {view === 'preview' && (
+                        <div className="preview-wrapper">
+                            <div className="form-box">
+                                <button className="btn-secondary" onClick={()=>setView('input')}>&larr; Back</button>
+                                <h2>Edit Details</h2>
+                                <div className="form-group"><label>Employee</label><input name="employeeName" value={formData.employeeName} onChange={handleChange} /></div>
+                                <div className="form-group"><label>Principal</label><input name="schoolPrincipal" value={formData.schoolPrincipal} onChange={handleChange} /></div>
+                                {appMode === 'payslip' && (
+                                    <React.Fragment>
+                                        <div className="form-group"><label>Email</label><input name="email" value={formData.email} onChange={handleChange} /></div>
+                                        <div className="form-group"><label>Salary ($)</label><input name="basicSalary" type="number" value={formData.basicSalary} onChange={handleChange} /></div>
+                                    </React.Fragment>
+                                )}
+                                {appMode === 'license' && (
+                                    <div className="form-group"><label>Exp Date</label><input type="date" name="licenseExpDate" value={formData.licenseExpDate} onChange={handleChange} /></div>
+                                )}
+                                <button className="btn-primary" onClick={handlePrint} style={{marginTop:'20px'}}>
+                                    Print / Save PDF
+                                </button>
+                            </div>
+
+                            {appMode === 'payslip' ? (
+                                <PayslipPreview formData={formData} logoUrl={logoUrl} />
+                            ) : (
+                                <LicensePreview 
+                                    formData={formData} 
+                                    searchCountry={searchCountry} 
+                                    searchState={searchState} 
+                                    customLogo={customLogo} 
+                                />
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <div className="footer">
+                    <div style={{marginBottom:'4px', fontWeight:'bold', color:'#555'}}>
+                        Created by KJEDUTECH 
+                        <a href="https://t.me/kjedutech" target="_blank" rel="noopener noreferrer" style={{marginLeft:'6px', textDecoration:'none', color:'inherit'}}>
+                            <i className="fa-brands fa-telegram" style={{color: '#0088cc', fontSize:'1.1em', verticalAlign:'middle', marginRight:'2px'}}></i>@KJEDUTECH
+                        </a>
+                    </div>
+                    <div style={{fontSize:'12px', color:'#777'}}>
+                        For more message me on telegram
+                    </div>
+                </div>
+            </React.Fragment>
+        );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+</script>
+
+</body>
+</html>
